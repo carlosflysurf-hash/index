@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de fichas — Surf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --surface: #ffffff;
+    --border: #e0ddd6;
+    --text: #1a1916;
+    --muted: #7a7870;
+    --accent: #1a6b4a;
+    --accent-light: #e8f4ef;
+    --accent-muted: #4a9b7a;
+    --warn: #b85c00;
+    --warn-light: #fef3e8;
+    --tag-bg: #eceae4;
+    --mono: 'DM Mono', monospace;
+    --serif: 'Instrument Serif', serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  header {
+    background: var(--text);
+    color: var(--bg);
+    padding: 0 2rem;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  header .logo {
+    font-family: var(--serif);
+    font-size: 18px;
+    letter-spacing: 0.01em;
+  }
+
+  header .logo span {
+    font-style: italic;
+    opacity: 0.6;
+  }
+
+  header .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--accent);
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    min-height: calc(100vh - 52px);
+  }
+
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 52px);
+  }
+
+  .main {
+    padding: 1.5rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 52px);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+
+  .field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    width: 100%;
+    transition: border-color 0.15s;
+    resize: vertical;
+  }
+
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    outline: none;
+    border-color: var(--accent-muted);
+    background: var(--surface);
+  }
+
+  .field textarea { min-height: 72px; }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .config-box {
+    background: var(--warn-light);
+    border: 1px solid #f0c896;
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .config-box .config-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--warn);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .config-box .config-title svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+  .config-box input {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid #f0c896;
+    border-radius: 5px;
+    padding: 6px 8px;
+    width: 100%;
+    margin-bottom: 6px;
+  }
+
+  .config-box input:last-child { margin-bottom: 0; }
+  .config-box input:focus { outline: none; border-color: var(--warn); }
+
+  .btn {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 9px 16px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    transition: all 0.12s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: var(--bg); border-color: #ccc; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  .btn-primary {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+  .btn-primary:hover { background: #333; border-color: #333; }
+
+  .btn-accent {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .btn-accent:hover { background: #155a3e; border-color: #155a3e; }
+
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .step-bar {
+    display: flex;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .step {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: default;
+  }
+
+  .step:last-child { border-right: none; }
+
+  .step .step-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--tag-bg);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step.active { color: var(--text); }
+  .step.active .step-num { background: var(--text); color: var(--bg); }
+  .step.done .step-num { background: var(--accent); color: #fff; }
+  .step.done { color: var(--accent); }
+
+  .panel { display: none; }
+  .panel.active { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+
+  .kw-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+  }
+
+  .kw-chip {
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.12s;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .kw-chip:hover { border-color: var(--accent-muted); background: var(--accent-light); }
+
+  .kw-chip.selected {
+    background: var(--accent-light);
+    border-color: var(--accent);
+  }
+
+  .kw-chip .kw-word {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .kw-chip .kw-meta {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .kw-chip .vol {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .kw-chip .diff {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  .diff-low { background: #e8f4ef; color: #155a3e; }
+  .diff-med { background: #fef3e8; color: #b85c00; }
+  .diff-high { background: #fdeaea; color: #9b2c2c; }
+
+  .selected-kws {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 36px;
+    padding: 8px;
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+  }
+
+  .kw-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    background: var(--tag-bg);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .kw-tag button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    display: flex;
+  }
+
+  .out-block { display: flex; flex-direction: column; gap: 5px; }
+
+  .out-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .out-label span {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .out-value {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text);
+    white-space: pre-wrap;
+    min-height: 38px;
+  }
+
+  .out-value.tall { min-height: 110px; }
+
+  .char-hint {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .char-hint.warn { color: var(--warn); }
+
+  .tags-out {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    min-height: 38px;
+  }
+
+  .tag-pill {
+    padding: 3px 10px;
+    background: var(--tag-bg);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--text);
+    font-family: var(--mono);
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--muted);
+    padding: 8px 0;
+  }
+
+  .shopify-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+
+  .shopify-status.ok { background: var(--accent-light); color: var(--accent); }
+  .shopify-status.err { background: #fdeaea; color: #9b2c2c; }
+  .shopify-status.idle { background: var(--tag-bg); color: var(--muted); }
+
+  .shopify-status svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0.25rem 0;
+  }
+
+  .tip {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+    padding: 8px 10px;
+    background: var(--tag-bg);
+    border-radius: 6px;
+  }
+
+  .tip a { color: var(--accent); text-decoration: none; }
+  .tip a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Fichas Surf <span>/ generador</span></div>
+  <div class="badge">Shopify + AI</div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div>
+      <div class="section-title">Configuración</div>
+      <div class="config-box">
+        <div class="config-title">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+          Credenciales
+        </div>
+        <input type="password" id="anthropic-key" placeholder="Anthropic API key (sk-ant-...)" autocomplete="off">
+        <input type="text" id="shopify-token" placeholder="Shopify token (shpat_...)" autocomplete="off">
+        <input type="text" id="shopify-store" placeholder="tutienda.myshopify.com">
+      </div>
+      <div class="tip" style="margin-top:8px">
+        Sin credenciales la herramienta funciona en modo demostración. <a href="https://console.anthropic.com" target="_blank">Obtener API key →</a>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <div class="section-title">Datos del producto</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+
+        <div class="field">
+          <label>Nombre del producto *</label>
+          <input type="text" id="prod-name" placeholder="Ej: Longboard pintail 9'2 epoxy">
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Tipo</label>
+            <select id="prod-type">
+              <option value="">— tipo —</option>
+              <option>Tabla de surf</option>
+              <option>Longboard</option>
+              <option>Bodyboard</option>
+              <option>SUP</option>
+              <option>Leash</option>
+              <option>Quillas / Fins</option>
+              <option>Funda de tabla</option>
+              <option>Traje neopreno</option>
+              <option>Parafina / Wax</option>
+              <option>Deck grip</option>
+              <option>Accesorio</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Marca</label>
+            <select id="prod-brand">
+              <option value="">— marca —</option>
+              <option>Marca propia</option>
+              <option>Deflow</option>
+              <option>Deeply</option>
+              <option>Otra</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Precio (€)</label>
+            <input type="number" id="prod-price" placeholder="549">
+          </div>
+          <div class="field">
+            <label>Precio compare (€)</label>
+            <input type="number" id="prod-compare" placeholder="699">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Nivel surfer</label>
+          <select id="prod-level">
+            <option value="">— nivel —</option>
+            <option>Principiante</option>
+            <option>Intermedio</option>
+            <option>Avanzado / Pro</option>
+            <option>Todos los niveles</option>
+            <option>Niños / Junior</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Características principales</label>
+          <input type="text" id="prod-features" placeholder="Ej: epoxy, 9'2, 75L, trípode FCS II">
+        </div>
+
+        <div class="field">
+          <label>Descripción base / notas</label>
+          <textarea id="prod-notes" placeholder="Info extra: fabricado en España, edición limitada, incluye quillas..."></textarea>
+        </div>
+
+        <div class="field">
+          <label>Tono de descripción</label>
+          <select id="prod-tone">
+            <option value="apasionado">Apasionado y lifestyle</option>
+            <option value="tecnico">Técnico y detallado</option>
+            <option value="neutro">Neutro y comercial</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="startResearch()" id="btn-research">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4"/><path d="M10 10l3 3"/></svg>
+        Buscar keywords
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="step-bar">
+      <div class="step active" id="step1">
+        <div class="step-num">1</div>
+        Keyword research
+      </div>
+      <div class="step" id="step2">
+        <div class="step-num">2</div>
+        Ficha generada
+      </div>
+      <div class="step" id="step3">
+        <div class="step-num">3</div>
+        Publicar en Shopify
+      </div>
+    </div>
+
+    <!-- PANEL 1: Keywords -->
+    <div class="panel active" id="panel1">
+      <div class="card">
+        <div class="section-title">Keywords sugeridas — haz clic para seleccionar</div>
+        <div id="kw-status" class="status-row" style="display:none">
+          <div class="spinner"></div>
+          <span id="kw-status-text">Analizando keywords...</span>
+        </div>
+        <div id="kw-grid" class="kw-grid"></div>
+        <div id="kw-empty" style="color:var(--muted);font-size:13px;padding:1rem 0">
+          Rellena los datos del producto y pulsa "Buscar keywords" para empezar.
+        </div>
+      </div>
+      <div class="card" id="kw-sel-card" style="display:none">
+        <div class="section-title">Keywords seleccionadas</div>
+        <div id="selected-kws" class="selected-kws"></div>
+        <div style="margin-top:1rem" class="btn-row">
+          <button class="btn btn-primary" onclick="generateSheet()" id="btn-generate">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+            Generar ficha de producto
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 2: Ficha -->
+    <div class="panel" id="panel2">
+      <div class="card">
+        <div class="section-title">Ficha generada para Shopify</div>
+        <div id="sheet-status" class="status-row" style="display:none">
+          <div class="spinner"></div>
+          <span>Generando ficha con IA...</span>
+        </div>
+        <div id="sheet-content" style="display:none;flex-direction:column;gap:1rem">
+
+          <div class="out-block">
+            <div class="out-label">
+              <span>Título SEO</span>
+              <button class="btn btn-sm" onclick="copyText('out-title')">Copiar</button>
+            </div>
+            <div class="out-value" id="out-title"></div>
+            <div class="char-hint" id="cc-title"></div>
+          </div>
+
+          <div class="out-block">
+            <div class="out-label">
+              <span>Descripción (Body HTML)</span>
+              <button class="btn btn-sm" onclick="copyText('out-desc')">Copiar</button>
+            </div>
+            <div class="out-value tall" id="out-desc"></div>
+          </div>
+
+          <div class="out-block">
+            <div class="out-label">
+              <span>Puntos clave (bullets)</span>
+              <button class="btn btn-sm" onclick="copyText('out-bullets')">Copiar</button>
+            </div>
+            <div class="out-value" id="out-bullets"></div>
+          </div>
+
+          <div class="out-block">
+            <div class="out-label">
+              <span>Meta description</span>
+              <button class="btn btn-sm" onclick="copyText('out-meta')">Copiar</button>
+            </div>
+            <div class="out-value" id="out-meta"></div>
+            <div class="char-hint" id="cc-meta"></div>
+          </div>
+
+          <div class="out-block">
+            <div class="out-label">
+              <span>Tags de Shopify</span>
+              <button class="btn btn-sm" onclick="copyText('out-tags-raw')">Copiar</button>
+            </div>
+            <div id="out-tags" class="tags-out"></div>
+            <input type="hidden" id="out-tags-raw">
+          </div>
+
+          <div class="out-block">
+            <div class="out-label">
+              <span>URL handle</span>
+              <button class="btn btn-sm" onclick="copyText('out-handle')">Copiar</button>
+            </div>
+            <div class="out-value" id="out-handle" style="font-family:var(--mono);font-size:12px"></div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="btn-row">
+            <button class="btn btn-accent" onclick="goPanel(3)" id="btn-shopify">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 10V5a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v5"/><path d="M1 10h14v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-2z"/></svg>
+              Publicar en Shopify
+            </button>
+            <button class="btn" onclick="goPanel(1)">← Editar keywords</button>
+            <button class="btn" onclick="regenerate()">Regenerar ficha</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 3: Shopify -->
+    <div class="panel" id="panel3">
+      <div class="card">
+        <div class="section-title">Publicar en Shopify</div>
+
+        <div id="shopify-check" class="shopify-status idle" style="margin-bottom:1rem">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+          <span id="shopify-check-text">Comprobando credenciales de Shopify...</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1rem">
+          <div class="field-row">
+            <div class="field">
+              <label>Estado del producto</label>
+              <select id="pub-status">
+                <option value="draft">Borrador</option>
+                <option value="active">Activo (publicar ya)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Vendor</label>
+              <input type="text" id="pub-vendor" placeholder="Ej: Deflow, Deeply...">
+            </div>
+          </div>
+          <div class="field">
+            <label>Tipo de producto (Shopify)</label>
+            <input type="text" id="pub-product-type" placeholder="Ej: Tabla de surf">
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-accent" onclick="publishToShopify()" id="btn-publish">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v9M4 7l4 4 4-4"/><path d="M2 13h12"/></svg>
+            Crear producto en Shopify
+          </button>
+          <button class="btn" onclick="goPanel(2)">← Volver a la ficha</button>
+        </div>
+
+        <div id="pub-status-box" style="margin-top:1rem;display:none"></div>
+      </div>
+
+      <div class="tip">
+        <strong>Sin token configurado</strong> — el producto no se creará en Shopify. Introduce tus credenciales en el panel izquierdo para activar esta función. <a href="https://help.shopify.com/es/manual/apps/app-types/custom-apps" target="_blank">Cómo crear un token →</a>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const DEMO_KEYWORDS = [
+  { word: 'tabla de surf principiantes', vol: '2.400', diff: 'low' },
+  { word: 'longboard surf', vol: '1.900', diff: 'low' },
+  { word: 'tabla surf epoxy', vol: '880', diff: 'low' },
+  { word: 'comprar tabla surf', vol: '3.600', diff: 'med' },
+  { word: 'tabla surf 9 pies', vol: '590', diff: 'low' },
+  { word: 'tabla surf para gordo', vol: '480', diff: 'low' },
+  { word: 'surf shop online españa', vol: '1.300', diff: 'med' },
+  { word: 'tabla surf volumen alto', vol: '390', diff: 'low' },
+  { word: 'longboard surf principiante', vol: '720', diff: 'low' },
+  { word: 'quillas FCS II', vol: '560', diff: 'med' },
+  { word: 'tabla surf oferta', vol: '2.100', diff: 'high' },
+  { word: 'deflow surf', vol: '310', diff: 'low' },
+];
+
+let selectedKws = [];
+let sheetResult = {};
+
+function g(id) { return document.getElementById(id); }
+
+function goPanel(n) {
+  [1,2,3].forEach(i => {
+    g('panel'+i).classList.toggle('active', i===n);
+    const s = g('step'+i);
+    s.classList.remove('active','done');
+    if (i < n) s.classList.add('done');
+    else if (i === n) s.classList.add('active');
+  });
+}
+
+async function callAI(prompt, system) {
+  const key = g('anthropic-key').value.trim();
+  if (!key) return null;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        system: system || 'Eres un experto en SEO para ecommerce de surf en España. Responde siempre en español.',
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const d = await r.json();
+    return d.content?.map(b => b.text||'').join('') || null;
+  } catch(e) { return null; }
+}
+
+function getDemoKeywords(prodName, prodType) {
+  return DEMO_KEYWORDS.map(k => ({...k}));
+}
+
+function renderKeywords(kws) {
+  const grid = g('kw-grid');
+  grid.innerHTML = '';
+  g('kw-empty').style.display = 'none';
+  kws.forEach(kw => {
+    const chip = document.createElement('div');
+    chip.className = 'kw-chip' + (selectedKws.includes(kw.word) ? ' selected' : '');
+    chip.innerHTML = `
+      <div class="kw-word">${kw.word}</div>
+      <div class="kw-meta">
+        <span class="vol">${kw.vol}/mes</span>
+        <span class="diff diff-${kw.diff}">${kw.diff === 'low' ? 'fácil' : kw.diff === 'med' ? 'media' : 'difícil'}</span>
+      </div>`;
+    chip.onclick = () => toggleKw(kw.word, chip);
+    grid.appendChild(chip);
+  });
+  g('kw-sel-card').style.display = 'block';
+}
+
+function toggleKw(word, chip) {
+  if (selectedKws.includes(word)) {
+    selectedKws = selectedKws.filter(k => k !== word);
+    chip.classList.remove('selected');
+  } else {
+    selectedKws.push(word);
+    chip.classList.add('selected');
+  }
+  renderSelectedKws();
+}
+
+function renderSelectedKws() {
+  const wrap = g('selected-kws');
+  wrap.innerHTML = '';
+  selectedKws.forEach(w => {
+    const tag = document.createElement('div');
+    tag.className = 'kw-tag';
+    tag.innerHTML = `${w}<button onclick="removeKw('${w}')" title="Quitar">×</button>`;
+    wrap.appendChild(tag);
+  });
+}
+
+function removeKw(word) {
+  selectedKws = selectedKws.filter(k => k !== word);
+  renderSelectedKws();
+  document.querySelectorAll('.kw-chip').forEach(c => {
+    if (c.querySelector('.kw-word')?.textContent === word) c.classList.remove('selected');
+  });
+}
+
+async function startResearch() {
+  const name = g('prod-name').value.trim();
+  if (!name) { alert('Introduce el nombre del producto primero.'); return; }
+
+  g('kw-status').style.display = 'flex';
+  g('kw-status-text').textContent = 'Analizando keywords...';
+  g('kw-grid').innerHTML = '';
+  g('kw-empty').style.display = 'none';
+  g('kw-sel-card').style.display = 'none';
+  g('btn-research').disabled = true;
+
+  const key = g('anthropic-key').value.trim();
+  let kws = [];
+
+  if (key) {
+    const type = g('prod-type').value;
+    const brand = g('prod-brand').value;
+    const features = g('prod-features').value;
+    const prompt = `Genera un keyword research para este producto de surf en España:
+Producto: ${name}
+Tipo: ${type}
+Marca: ${brand}
+Características: ${features}
+
+Devuelve SOLO un JSON array con 12 keywords, sin texto adicional ni backticks. Formato exacto:
+[{"word":"keyword aquí","vol":"número/mes estimado","diff":"low|med|high"}]
+
+Estima volúmenes reales para España. Incluye variantes long-tail, comparativas y de compra.`;
+
+    const raw = await callAI(prompt);
+    if (raw) {
+      try {
+        const clean = raw.replace(/```json|```/g,'').trim();
+        kws = JSON.parse(clean);
+      } catch(e) { kws = getDemoKeywords(name, type); }
+    } else {
+      kws = getDemoKeywords(name, type);
+    }
+  } else {
+    await new Promise(r => setTimeout(r, 900));
+    kws = getDemoKeywords(name, g('prod-type').value);
+  }
+
+  g('kw-status').style.display = 'none';
+  g('btn-research').disabled = false;
+  renderKeywords(kws);
+}
+
+async function generateSheet() {
+  if (selectedKws.length === 0) {
+    alert('Selecciona al menos una keyword antes de generar la ficha.');
+    return;
+  }
+
+  goPanel(2);
+  g('sheet-status').style.display = 'flex';
+  g('sheet-content').style.display = 'none';
+  g('btn-generate').disabled = true;
+
+  const name = g('prod-name').value.trim();
+  const type = g('prod-type').value;
+  const brand = g('prod-brand').value;
+  const price = g('prod-price').value;
+  const level = g('prod-level').value;
+  const features = g('prod-features').value;
+  const notes = g('prod-notes').value;
+  const tone = g('prod-tone').value;
+  const kws = selectedKws.join(', ');
+
+  const key = g('anthropic-key').value.trim();
+
+  if (key) {
+    const prompt = `Genera una ficha de producto completa para Shopify en español.
+
+PRODUCTO: ${name}
+TIPO: ${type} | MARCA: ${brand} | PRECIO: ${price}€ | NIVEL: ${level}
+CARACTERÍSTICAS: ${features}
+NOTAS EXTRA: ${notes}
+KEYWORDS OBJETIVO: ${kws}
+TONO: ${tone}
+
+Devuelve SOLO este JSON sin texto adicional ni backticks:
+{
+  "titulo": "título SEO optimizado máx 70 chars con keyword principal",
+  "descripcion": "descripción HTML con <p> y <ul> de 180-220 palabras, incluye keywords naturalmente, tono ${tone}",
+  "bullets": "5 puntos clave separados por \\n, empezando con •",
+  "meta": "meta description atractiva de 140-155 chars con CTA",
+  "tags": ["tag1","tag2","tag3","tag4","tag5","tag6","tag7","tag8"],
+  "handle": "url-slug-sin-acentos"
+}`;
+
+    const raw = await callAI(prompt, 'Eres un copywriter experto en ecommerce de surf y deportes de agua en España. Genera fichas SEO perfectas para Shopify. Responde SIEMPRE con JSON válido únicamente.');
+    if (raw) {
+      try {
+        const clean = raw.replace(/```json|```/g,'').trim();
+        sheetResult = JSON.parse(clean);
+        renderSheet(sheetResult);
+      } catch(e) {
+        renderDemoSheet(name, kws);
+      }
+    } else {
+      renderDemoSheet(name, kws);
+    }
+  } else {
+    await new Promise(r => setTimeout(r, 1200));
+    renderDemoSheet(name, kws);
+  }
+
+  g('sheet-status').style.display = 'none';
+  g('sheet-content').style.display = 'flex';
+  g('btn-generate').disabled = false;
+}
+
+function renderDemoSheet(name, kws) {
+  const kw1 = selectedKws[0] || 'tabla de surf';
+  sheetResult = {
+    titulo: `${name} | Envío gratis — Surf Shop`,
+    descripcion: `<p>Descubre la <strong>${name}</strong>, la opción perfecta para surfistas que buscan calidad y rendimiento en cada ola. Fabricada con materiales de primera, esta tabla está diseñada para maximizar tu progresión en el agua.</p><ul><li>Construcción epoxy de alta resistencia</li><li>Diseño optimizado para olas de tamaño medio</li><li>Compatible con quillas FCS II y Future</li></ul><p>Ya sea que estés empezando o buscando mejorar tu surf, esta tabla te dará la estabilidad y el control que necesitas. Disponible con envío gratuito a toda España.</p>`,
+    bullets: `• Construcción epoxy ligera y resistente\n• Ideal para ${kw1}\n• Compatible con sistemas de quillas FCS II\n• Envío gratuito a toda España\n• Garantía de 2 años`,
+    meta: `Compra la ${name} con envío gratis. La mejor opción para ${kw1}. Calidad premium al mejor precio. ¡Pídela hoy!`,
+    tags: ['surf', 'tabla surf', kw1, 'epoxy', 'surfboard', 'deporte acuático', 'playa', 'verano'],
+    handle: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  };
+  renderSheet(sheetResult);
+}
+
+function renderSheet(s) {
+  g('out-title').textContent = s.titulo || '';
+  const tl = (s.titulo||'').length;
+  g('cc-title').textContent = `${tl}/70 caracteres`;
+  g('cc-title').className = 'char-hint' + (tl > 70 ? ' warn' : '');
+
+  g('out-desc').textContent = s.descripcion || '';
+  g('out-bullets').textContent = s.bullets || '';
+
+  g('out-meta').textContent = s.meta || '';
+  const ml = (s.meta||'').length;
+  g('cc-meta').textContent = `${ml}/155 caracteres`;
+  g('cc-meta').className = 'char-hint' + (ml > 155 ? ' warn' : '');
+
+  const tagsArr = Array.isArray(s.tags) ? s.tags : (s.tags||'').split(',').map(t=>t.trim());
+  const tagsWrap = g('out-tags');
+  tagsWrap.innerHTML = '';
+  tagsArr.forEach(t => {
+    const pill = document.createElement('div');
+    pill.className = 'tag-pill';
+    pill.textContent = t;
+    tagsWrap.appendChild(pill);
+  });
+  g('out-tags-raw').value = tagsArr.join(', ');
+
+  g('out-handle').textContent = s.handle || '';
+
+  g('pub-vendor').value = g('prod-brand').value || '';
+  g('pub-product-type').value = g('prod-type').value || '';
+}
+
+async function regenerate() {
+  g('sheet-content').style.display = 'none';
+  await generateSheet();
+}
+
+function copyText(id) {
+  const el = g(id);
+  const text = el.value !== undefined ? el.value : el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btns = document.querySelectorAll('.btn-sm');
+    btns.forEach(b => { if(b.getAttribute('onclick')?.includes(id)) { b.textContent = '✓ Copiado'; setTimeout(()=>b.textContent='Copiar',1500); }});
+  });
+}
+
+async function publishToShopify() {
+  const token = g('shopify-token').value.trim();
+  const store = g('shopify-store').value.trim();
+  const checkBox = g('shopify-check');
+  const pubBox = g('pub-status-box');
+
+  if (!token || !store) {
+    checkBox.className = 'shopify-status err';
+    checkBox.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6 6l4 4M10 6l-4 4"/></svg><span>Introduce el token y el dominio de tu tienda en el panel de configuración.</span>`;
+    return;
+  }
+
+  checkBox.className = 'shopify-status idle';
+  checkBox.innerHTML = `<div class="spinner" style="width:16px;height:16px;border-width:2px"></div><span>Conectando con Shopify...</span>`;
+  g('btn-publish').disabled = true;
+
+  const tagsArr = (g('out-tags-raw').value || '').split(',').map(t=>t.trim()).filter(Boolean);
+  const price = g('prod-price').value || '0';
+  const comparePrice = g('prod-compare').value || '';
+
+  const payload = {
+    product: {
+      title: sheetResult.titulo || g('prod-name').value,
+      body_html: sheetResult.descripcion || '',
+      vendor: g('pub-vendor').value || '',
+      product_type: g('pub-product-type').value || '',
+      handle: sheetResult.handle || '',
+      status: g('pub-status').value,
+      tags: tagsArr.join(', '),
+      variants: [{
+        price: price,
+        compare_at_price: comparePrice || undefined,
+      }],
+      metafields: [
+        { namespace: 'seo', key: 'description', value: sheetResult.meta || '', type: 'single_line_text_field' }
+      ]
+    }
+  };
+
+  try {
+    const storeClean = store.replace('https://','').replace('http://','').replace(/\/$/,'');
+    const r = await fetch(`https://${storeClean}/admin/api/2024-01/products.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': token
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await r.json();
+
+    if (r.ok && data.product) {
+      checkBox.className = 'shopify-status ok';
+      checkBox.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5 8l2 2 4-4"/></svg><span>¡Producto creado correctamente!</span>`;
+      pubBox.style.display = 'block';
+      pubBox.innerHTML = `<div class="tip">Producto creado con ID <strong>${data.product.id}</strong>. <a href="https://${storeClean}/admin/products/${data.product.id}" target="_blank">Ver en Shopify →</a></div>`;
+    } else {
+      throw new Error(data.errors ? JSON.stringify(data.errors) : 'Error desconocido');
+    }
+  } catch(e) {
+    checkBox.className = 'shopify-status err';
+    checkBox.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6 6l4 4M10 6l-4 4"/></svg><span>Error al conectar: ${e.message}</span>`;
+    pubBox.style.display = 'block';
+    pubBox.innerHTML = `<div class="tip">Comprueba que el token tiene permisos <strong>write_products</strong> y que el dominio es correcto (ej: <em>mitienda.myshopify.com</em>).</div>`;
+  }
+
+  g('btn-publish').disabled = false;
+}
+</script>
+</body>
+</html>
